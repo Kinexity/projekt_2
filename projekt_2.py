@@ -26,12 +26,14 @@ def cylindrical_to_cartesian_transformation(r,theta,Z):
 
 starting_thetas=[random.uniform(0,2*m.pi) for __ in range(number_of_asteroids)]
 '''print(cylindrical_to_cartesian_transformation(asteroid_sun_distance,starting_thetas))'''
+#losowo wybrane wspolrzedne asteroid na orbicie marsa
 
-#liczymy macierz obrotu od wektora mars_orbiting_speed (wikipedia)
+#liczymy macierz obrotu od wektora mars_orbiting_speed
 starting_velocities_r = [-mars_orbiting_speed*m.sin(random.uniform(0,m.pi/2)) for __ in range(number_of_asteroids)]
 starting_velocities_theta = vec_function(mars_orbiting_speed ,starting_velocities_r)
 '''print(starting_velocities_theta)'''
 
+#wektor predkosci=mars_orbiting_speed odchylam o randomowy kat
 def make_starting_array(r,theta,funct):
 	Y[:,1] = starting_velocities_r
 	Y[:,3] = starting_velocities_theta
@@ -39,24 +41,30 @@ def make_starting_array(r,theta,funct):
 print(make_starting_array(asteroid_sun_distance,starting_thetas,cylindrical_to_cartesian_transformation))
 print(Y[0,1])
 
-sun_sgp=4
+sun_sgp=4*10**3
 earth_sgp=3
 moon_sqp=2
 sun_coordinates=[0,0]
 earth_sun_distance=3
+earth_moon_distance=0.5
 step=0.01
 liminal_time=25.0
 radial_earth_speed=1
+radial_moon_speed=12
 def earth_coordinates(theta,funct):
 	return funct(earth_sun_distance,theta,B)
 
-B = np.zeros(shape=(int(liminal_time/step),3))
-B[:,0]= np.arange(0,liminal_time,step)
-#wspolrzedne x-owe
-'''B[:,1]= earth_sun_distance*np.cos(radial_speed*B[:,0])
-B[:,2]= earth_sun_distance*np.sin(radial_speed*B[:,0])'''
+#tu będą licznoe wspolrzedne ziemi i ksiezyca
+B = C = np.zeros(shape=(int(liminal_time/step),3))
+B[:,0] = C[:,0] = np.arange(0,liminal_time,step)
+#wsp x-owe ziemi
+B[:,1]= earth_sun_distance*np.cos(radial_earth_speed*B[:,0])
+B[:,2]= earth_sun_distance*np.sin(radial_earth_speed*B[:,0])
 print(B)
-
+#wsp x-owe ks
+C[:,1]= B[:,1] + earth_moon_distance*np.cos(radial_moon_speed*B[:,0])
+C[:,2]= B[:,2] + earth_moon_distance*np.sin(radial_moon_speed*B[:,0])
+print(C)
 
 
 '''class asteroid_data:
@@ -67,9 +75,9 @@ file = open("dane.txt","w+")
 file.truncate(0)
 file.close()
 
-
+#rownanie rozniczkowe na przyciaganie od samego slonca, gdzieś w nim jest blad bo nie liczy dobrze
 def solvr(Y,t):
-    return[-Y[1],sun_sgp/(np.hypot(Y[0], Y[2])**3)*Y[0],-Y[3],sun_sgp/(np.hypot(Y[0], Y[2])**3)*Y[2]]
+    return[Y[1],-sun_sgp/(np.hypot(Y[0], Y[2])**3)*Y[0],Y[3],-sun_sgp/(np.hypot(Y[0], Y[2])**3)*Y[2]]
 
 def main(i):
     a_t = np.arange(0, liminal_time, step)
@@ -81,8 +89,11 @@ def main(i):
 
 processes = []
 i=0
-for _ in range(number_of_asteroids):
+#rozwiązuje w pętli z multiprocessig
+'''for _ in range(number_of_asteroids):
 	p= multiprocessing.Process(target=main(i))
 	p.start()
 	i+=1
-	processes.append(p)
+	processes.append(p)'''
+main(1)
+#ostatecznie zapisuje do pliku main(1) nie wiedziałem jak zrobic zeby dopisywal w porzadku po multiprocessing i zeby dopisywal arraye a nie tworzyl caly plik od nowa po kazdej serii
