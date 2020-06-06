@@ -62,7 +62,7 @@ class vector: # wektor euklidesowy dla oddziaływań Słońce-Ziemia-Księżyc
 		x = temp.x
 		y = temp.y
 		y = temp.y
-@@ -38,18 +43,64 @@ def __div__(self, divisor: float):
+	def __div__(self, divisor: float):
 
 
 
