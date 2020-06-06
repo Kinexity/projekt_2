@@ -115,4 +115,104 @@ main(1)
 
 
 #ostatecznie zapisuje do pliku main(1) nie wiedziałem jak zrobic zeby dopisywal w porzadku po multiprocessing i zeby dopisywal arraye a nie tworzyl caly plik od nowa po kazdej serii
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+import numpy as np
+import scipy
+import math as m
+import numpy as np
+from scipy import integrate
+import random
+import multiprocessing
+from multiprocessing import Queue,Process
 
+mars_orbiting_speed=24
+
+#
+# This is a class representing a single asteroid. It's initiated with it's random
+# initial state: theta and velocities.
+#
+# Calling method fly me will calculate if it hit the moon and the angle.
+#
+class Asteroid:
+    # Initialise the asteroid with random coordinates.
+    # Takes asteroid ID as the input parameter.
+    def __init__(self, id):
+        self.id = id
+
+    # Randomise the initial state
+    def randomise(self):
+        self.starting_theta = random.uniform(0,2*m.pi)
+        self.starting_velocities_r = -mars_orbiting_speed*m.sin(random.uniform(0,m.pi/2))
+
+    # Perform the calculations. Check the angle and if the asteroid hit the moon
+    def flyMe(self):
+        # INSERT HERE YOUR CODE
+        self.angleHitTheMoon = random.randrange(-90,90)
+        #INSERT HERE YOUR CODE
+        self.hitTheMoon = (random.randrange(0,4) % 2 == 0)
+
+# Flies a single asteroid. Put the result to a queue.
+def flyAsteroid(id,resultQueue):
+        asteroid = Asteroid(id)
+        asteroid.randomise()
+        asteroid.flyMe();
+        resultQueue.put({"hit the moon":asteroid.hitTheMoon,"angle":asteroid.angleHitTheMoon})
+
+def printStatus(currentSimulation,resultQueue):
+    numberProcessed = 0
+    numberHitTheMoon = 0
+    queueRow = resultQueue.get(True)
+    while queueRow != 'STOP':
+        numberProcessed = numberProcessed + 1
+        if queueRow["hit the moon"]:
+            numberHitTheMoon = numberHitTheMoon+1
+        # Print a report line every 5 asteroids:
+        if numberProcessed % 5 == 0:
+            print("simulation number: ",currentSimulation,", asteroids calculated: ",numberProcessed, ", some of these hit the moon: ",numberHitTheMoon)
+        queueRow = resultQueue.get(True)
+
+
+#
+# Run a single round for the simulation (a 1000 of asteroids as in the task description)
+#
+# Creates a thread pool. Flies the asteroids in each thraed.
+# Number of threads in the pool is the same as number of cpu cores available on the machine.
+#
+# The logic is: take a thread from the pool, fly the asteroide and return the thread back to the pool
+# after simulation completed.
+#
+# See https://docs.python.org/2/library/queue.html
+#
+class SymulationRunner:
+    def __init__(self, numberOfAsteroids,currentSimulation):
+        self.numberOfProcesses = multiprocessing.cpu_count()
+        self.numberOfAsteroids = numberOfAsteroids
+        self.currentSimulation = currentSimulation
+        #self.resultQueue
+
+    def flyAsteroids(self):
+        m = multiprocessing.Manager()
+        resultQueue = m.Queue()
+        resultProcessing = Process(target=printStatus, args=(self.currentSimulation,resultQueue))
+        resultProcessing.start()
+        pool = multiprocessing.Pool(self.numberOfProcesses)
+        results = [pool.apply_async(flyAsteroid,(i,resultQueue,)) for i in range(self.numberOfAsteroids)]
+        pool.close()
+        pool.join()
+        resultQueue.put("STOP")
+        resultProcessing.join()
+
+        #resultProcessing.close()
+
+# Store and manage the result
+#class ResultProcessor:
+
+
+def main(numberOfAsteroidsInRound, numberOfRounds):
+# Uncomment the below line and commend the rest to run a test for a single asteroid
+#   flyAsteroid(0,Queue())
+    runner = SymulationRunner(numberOfAsteroidsInRound,0)
+    runner.flyAsteroids()
+
+# The parameter to the main function is number of asteroids
+main(10,3)
