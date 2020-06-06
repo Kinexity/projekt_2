@@ -5,6 +5,7 @@ import numpy as np
 from scipy import integrate
 import random
 import multiprocessing
+import functools
 
 number_of_asteroids = 3
 
@@ -66,34 +67,52 @@ C[:,1]= B[:,1] + earth_moon_distance*np.cos(radial_moon_speed*B[:,0])
 C[:,2]= B[:,2] + earth_moon_distance*np.sin(radial_moon_speed*B[:,0])
 print(C)
 
+'''def solve(Y,t):
+    return[Y[1],-earth_sgp/(np.hypot(Y[0], Y[2])**3)*Y[0],Y[3],-earth_sgp/(np.hypot(Y[0], Y[2])**3)*Y[2]]'''
 
 '''class asteroid_data:
 	def '''
 
-file = open("dane.txt","w+")
-'''data.csv'''
+file = open("data.csv","w+")
+
 file.truncate(0)
 file.close()
+Ax_earth_speed = -radial_earth_speed*earth_sun_distance*np.sin(radial_earth_speed*B[:,0])
+Ay_earth_speed = radial_earth_speed*earth_sun_distance*np.cos(radial_earth_speed*B[:,0])
+#rownanie rozniczkowe na przyciaganie od  slonca i ziemi- tor ruchu asteroidy, gdzieś w nim jest blad bo nie liczy dobrze
+def solvr(P,t):
+    return[P[1],-sun_sgp/(np.hypot(P[0], P[2])**3)*P[0]-earth_sgp/(np.hypot(P[0]-P[4], P[2]-P[5])**3)*(P[0]-P[4]) ,P[3],-sun_sgp/(np.hypot(P[0], P[2])**3)*P[2]-earth_sgp/(np.hypot(P[0]-P[4], P[2]-P[5])**3)*(P[2]-P[5]),-radial_earth_speed*P[5],radial_earth_speed*P[4]]
 
-#rownanie rozniczkowe na przyciaganie od samego slonca, gdzieś w nim jest blad bo nie liczy dobrze
-def solvr(Y,t):
-    return[Y[1],-sun_sgp/(np.hypot(Y[0], Y[2])**3)*Y[0],Y[3],-sun_sgp/(np.hypot(Y[0], Y[2])**3)*Y[2]]
 
 def main(i):
+    a_t = np.arange(0, liminal_time, step)
+    asol = integrate.odeint(solvr, [Y[i,0],Y[i,1],Y[i,2],Y[i,3],earth_sun_distance,0], a_t)
+    astack = np.c_[a_t, asol[:,0], asol[:, 1],asol[:,2], asol[:, 3]]
+    np.savetxt('data.csv', astack, delimiter=',', header='time, asteroid_x_from_sun,asteroid_velocity_x,asteroid_y_from_sun,asteroid_velocity_y', comments='')
+    
+
+'''def main(i):
     a_t = np.arange(0, liminal_time, step)
 
 
     asol = integrate.odeint(solvr, [Y[i,0],Y[i,1],Y[i,2],Y[i,3]], a_t)
     astack = np.c_[a_t, asol[:,0], asol[:, 1],asol[:,2], asol[:, 3]]
-    np.savetxt('dane.txt', astack, delimiter=',', header='t, dx,vx,dy,vy', comments='')
+    np.savetxt('dane.txt', astack, delimiter=',', header='t, dx,vx,dy,vy', comments='')'''
 
 processes = []
 i=0
 #rozwiązuje w pętli z multiprocessig
+
+    
+    
 '''for _ in range(number_of_asteroids):
 	p= multiprocessing.Process(target=main(i))
 	p.start()
 	i+=1
 	processes.append(p)'''
 main(1)
+
+
+
 #ostatecznie zapisuje do pliku main(1) nie wiedziałem jak zrobic zeby dopisywal w porzadku po multiprocessing i zeby dopisywal arraye a nie tworzyl caly plik od nowa po kazdej serii
+
